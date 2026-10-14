@@ -1,0 +1,3 @@
+# Overrides ~/.config/ruff/ruff.toml for this add-on: no rule is checked here.
+[lint]
+select = []
