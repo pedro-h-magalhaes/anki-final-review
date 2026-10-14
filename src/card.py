@@ -10,7 +10,5 @@ class Card:
 
     def get_answer_time(self, answer_time: datetime, now: datetime):
         self.last_answer_time = answer_time
-        if answer_time == now:
-            self.r_score = 100
-        else:
-            self.r_score = None
+        elapsed_days = (now - answer_time).total_seconds() / 86400
+        self.r_score = 100 - elapsed_days
