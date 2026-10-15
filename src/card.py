@@ -105,13 +105,14 @@ class CardState:
         """Return the score at `now`, in seconds since the epoch.
 
         Args:
-            now: Not earlier than `t0`.
+            now: Seconds since the epoch; a time before `t0`, as from a clock
+                set ahead, counts as `t0`.
             settings: Holds the pace constants.
 
         Returns:
             The score, from 0 to 100.
         """
-        return score(now - self.t0, self.stability, settings)
+        return score(max(0.0, now - self.t0), self.stability, settings)
 
     def answer(self, grade: Grade, at: float, settings: Settings) -> CardState:
         """Return the state after an answer with `grade` at time `at`.

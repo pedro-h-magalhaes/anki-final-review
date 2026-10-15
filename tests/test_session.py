@@ -28,3 +28,8 @@ def test_a_synced_answer_counts_at_the_next_choice():
     after = session.states({1: [(0, 3), (5_000, 3)]}, now=10)[1]
     assert after.answers == before.answers + 1
     assert after.stability > before.stability
+
+
+def test_an_answer_from_a_clock_ahead_does_not_break_the_choice():
+    session = Session(Settings())
+    assert session.choose({1: [(30_000_000, 1)], 2: []}, now=10_000) == 1

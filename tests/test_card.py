@@ -86,3 +86,8 @@ def test_a_wrong_answer_keeps_the_clock_and_drops_the_score():
     assert after.t0 == 0
     assert after.score_at(300, SETTINGS) < card.score_at(300, SETTINGS)
     assert (after.answers, after.correct) == (16, 7)
+
+
+def test_a_t0_in_the_future_counts_as_just_answered():
+    card = CardState(stability=0, t0=30_000)
+    assert card.score_at(10_000, SETTINGS) == 100
