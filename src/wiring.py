@@ -87,6 +87,26 @@ def _get_next_v3_card(self: Reviewer) -> None:
     self.card.start_timer()
 
 
+def _clear_anki_queues(proceed_ease: tuple[bool, int], reviewer, card) -> tuple[bool, int]:
+    """Empty Anki's cached study queues before a final-review answer.
+
+    Anki refuses to answer a card that is not at the top of its own cached
+    queue; saving the card again without an undo entry drops that cache.
+
+    Args:
+        proceed_ease: Whether the answer goes ahead, and its ease.
+        reviewer: The reviewer about to answer.
+        card: The card about to be answered.
+
+    Returns:
+        `proceed_ease` unchanged.
+    """
+    if _session is not None and proceed_ease[0]:
+        col = reviewer.mw.col
+        col.update_card(col.get_card(card.id), skip_undo_entry=True)
+    return proceed_ease
+
+
 def _on_answer(reviewer, card, ease) -> None:
     """Remember the answered card, so it does not come right back."""
     if _session is not None:
@@ -137,5 +157,6 @@ def register() -> None:
     _action.toggled.connect(_toggle)
     mw.form.menuTools.addAction(_action)
     Reviewer._get_next_v3_card = _get_next_v3_card
+    gui_hooks.reviewer_will_answer_card.append(_clear_anki_queues)
     gui_hooks.reviewer_did_answer_card.append(_on_answer)
     mw.addonManager.setConfigUpdatedAction(__name__, _on_config_saved)
