@@ -35,7 +35,7 @@ The system is done when:
 | Correct answer | Good or Easy. |
 | Wrong answer | Again or Hard. |
 | Review history | Anki's record of every answer a card got, on any device, which sync carries between devices. |
-| Chosen deck | A deck the student picked in the settings to take part in the final review. |
+| Chosen deck | A deck the student picked, in the deck window or the settings, to take part in the final review. |
 | Eligible card | A card in a chosen deck that is neither suspended nor buried, and was not just answered. |
 
 ## Functional requirements
@@ -95,12 +95,18 @@ Acceptance criteria:
 - Given a card whose history holds only wrong answers, when it is rebuilt, then `t0` is the time of its first answer.
 - Given any card, when Anki closes and opens again, then its rebuilt values are the same.
 
-**FR7: the queue in Anki.** An item in Anki's Tools menu starts the final review on the chosen decks, and after every answer Anki shows the card chosen by FR5.
+**FR7: the queue in Anki.** A "Final Review" row at the top of Anki's deck list starts the final review on the chosen decks, and after every answer Anki shows the card chosen by FR5.
+
+Clicking the row's name opens the study screen at once. Leaving the study screen by any path ends the final review, so the other decks never fall into its order.
 
 Acceptance criteria:
 
+- Given the deck list, when it shows, then the "Final Review" row comes first, with its name in blue like a filtered deck.
+- Given the deck list, when it shows, then the row's New, Learn and Due count every eligible card by its Anki queue.
+- Given an open final review, when the footer shows, then it has the same counts as the row.
+- Given a card that just got Again, when the counts are shown, then it counts under Learn.
 - Given an open final review, when the student answers a card, then the next card shown is the one with the lowest score among the eligible cards.
-- Given the final review is not started, when the student reviews a deck, then Anki behaves as it does without the add-on.
+- Given the student left the final review, when they review a deck, then Anki behaves as it does without the add-on.
 
 **FR8: answers count for Anki too.** An answer given in the final review goes to Anki's own scheduler like any other answer.
 
@@ -108,11 +114,15 @@ Acceptance criteria:
 
 - Given an answer in the final review, when it is saved, then it appears in the card's review history and Anki reschedules the card as usual.
 
-**FR9: choosing the decks.** The settings hold the list of decks that take part in the final review.
+**FR9: choosing the decks.** The gear on the "Final Review" row opens a window with Anki's deck tree, where the student checks the decks that take part in the final review. The window saves the choice in the settings, which also hold the list.
 
 Acceptance criteria:
 
 - Given a deck left out of the settings, when the final review runs, then none of its cards show up.
+- Given a checked deck, when the window shows, then its subdecks are checked and locked.
+- Given a filtered deck, when the window shows, then it is not listed.
+- Given a new choice saved in the window, when the deck list shows again, then the row's counts use the new decks.
+- Given no chosen decks, when the student clicks the row's name, then the window opens.
 
 **FR10: the settings.** Every constant of the formulas can be changed in Anki's add-on config screen, and a Markdown page beside it explains how to change each one.
 
@@ -137,7 +147,7 @@ Acceptance criteria:
 
 1. The add-on is written in Python 3.12 and tested with pytest.
 2. The tests run without Anki open.
-3. Only `src/wiring.py` imports from Anki.
+3. Only `src/wiring.py` and `src/dialog.py` import from Anki.
 4. The add-on runs only in Anki on the computer; phone answers reach it through sync.
 5. Time is counted in seconds, both for the timestamps and for the difference between them.
 6. Python turns a score below about 10⁻³²⁴ into 0, and the stability tie-break settles those cases.
@@ -154,7 +164,10 @@ Acceptance criteria:
 | The pace scale is geometric. | The precision sits on the short paces, where telling one weak card from another matters. | A linear scale between 60 s and 14,400 s. |
 | On a score tie, the card with the lowest stability comes. | It keeps the queue on the least mastered cards once the score has turned 0. | Putting the new card at score 0, which would end the alternation between new and seen cards. |
 | The gain does not depend on the score at the time of the answer. | The queue answers cards with very close scores in a row, and the rule would not change the order. | The FSRS adjustment that raises the gain when the score was low. |
-| Only one module imports from Anki. | The algorithm stays testable without Anki. | Calls to Anki spread across the code. |
+| Only the wiring and the deck window import from Anki. | The algorithm stays testable without Anki. | Calls to Anki spread across the code. |
+| The final review is a row added to the deck list. | It sits where the student picks what to study, and the cards stay in their own decks. | A real filtered deck, which moves the cards and changes their scheduling. |
+| Leaving the study screen ends the final review. | The other decks never fall into the final review's order. | A Tools menu switch that stays on across every deck. |
+| The row's Due counts every review card in the queue, not only the ones due today. | Every eligible card is in the queue, and the row matches the footer. | Repeating Anki's due-today count. |
 
 ## Slice plan
 
@@ -167,5 +180,6 @@ Acceptance criteria:
 | 5. The rebuild | Card values from the review history | FR6 |
 | 6. The settings | Every constant editable, with its Markdown page | FR10 |
 | 7. The decks | Only cards from the chosen decks | FR9 |
-| 8. The queue in Anki | The Tools menu item, and Anki shows the chosen card after every answer | FR7 and FR8 |
+| 8. The queue in Anki | The deck-list row, and Anki shows the chosen card after every answer | FR7 and FR8 |
 | 9. Editing and merging | Values kept on an edit and on a merge | FR11 |
+| 10. The deck window | Checking the decks from the row's gear | FR9 |
