@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass, replace
 from enum import IntEnum
 
 from .settings import Settings
@@ -76,3 +77,71 @@ def next_stability(
         return 100 - (100 - stability) * cut**e
     e = settings.rate_band ** (1 - 2 * rate) * (1 - (1 - brake) * weight)
     return stability * cut**e
+
+
+@dataclass(frozen=True)
+class CardState:
+    """What the queue knows about one card.
+
+    Attributes:
+        stability: From 0 to 100.
+        t0: Seconds since the epoch of the last correct answer; without one,
+            of the first answer, or of entering the queue.
+        answers: Number of answers.
+        correct: Number of those that were Good or Easy.
+    """
+
+    stability: float
+    t0: float
+    answers: int = 0
+    correct: int = 0
+
+    @property
+    def rate(self) -> float:
+        """Return the share of correct answers, or 0.5 with no answers."""
+        return self.correct / self.answers if self.answers else 0.5
+
+    def score_at(self, now: float, settings: Settings) -> float:
+        """Return the score at `now`, in seconds since the epoch.
+
+        Args:
+            now: Not earlier than `t0`.
+            settings: Holds the pace constants.
+
+        Returns:
+            The score, from 0 to 100.
+        """
+        return score(now - self.t0, self.stability, settings)
+
+    def answer(self, grade: Grade, at: float, settings: Settings) -> CardState:
+        """Return the state after an answer with `grade` at time `at`.
+
+        The stability moves with the rate and answers from before the answer;
+        only a correct answer moves `t0` to `at`.
+
+        Args:
+            grade: The answer's grade.
+            at: Seconds since the epoch.
+            settings: Holds the formula constants.
+
+        Returns:
+            A new state; this one is left unchanged.
+        """
+        stability = next_stability(self.stability, grade, self.rate, self.answers, settings)
+        if is_correct(grade):
+            return replace(self, stability=stability, t0=at,
+                           answers=self.answers + 1, correct=self.correct + 1)
+        return replace(self, stability=stability, answers=self.answers + 1)
+
+
+def new_card(entered_at: float, settings: Settings) -> CardState:
+    """Return the state of a card with no answers.
+
+    Args:
+        entered_at: Seconds since the epoch when it entered the queue.
+        settings: Holds the initial stability.
+
+    Returns:
+        A state at the initial stability whose score is 100 at `entered_at`.
+    """
+    return CardState(stability=settings.initial_stability, t0=entered_at)

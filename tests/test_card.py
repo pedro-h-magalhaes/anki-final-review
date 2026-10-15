@@ -45,3 +45,44 @@ def test_stability_stays_between_0_and_100():
     for answers in range(60):
         stability = next_stability(stability, Grade.AGAIN, 0.0, answers, SETTINGS)
         assert 0 <= stability <= 100
+
+
+from src.card import CardState, new_card
+
+
+def test_a_new_card_starts_at_score_100():
+    card = new_card(1_000, SETTINGS)
+    assert (card.stability, card.answers, card.correct, card.rate) == (20, 0, 0, 0.5)
+    assert card.score_at(1_000, SETTINGS) == 100
+
+
+def test_six_good_answers_match_the_example():
+    card, path = new_card(0, SETTINGS), []
+    for at in range(6):
+        card = card.answer(Grade.GOOD, at, SETTINGS)
+        path.append(round(card.stability, 1))
+    assert path == [22, 27.8, 33.4, 39, 45, 51.7]
+
+
+def test_a_mature_card_drops_little_and_comes_back():
+    card, path = CardState(stability=99, t0=0, answers=20, correct=20), []
+    for grade in (Grade.AGAIN, Grade.GOOD, Grade.GOOD):
+        card = card.answer(grade, 0, SETTINGS)
+        path.append(round(card.stability, 1))
+    assert path == [83.5, 94.1, 98]
+
+
+def test_a_correct_answer_resets_the_clock():
+    card = CardState(stability=50, t0=0, answers=15, correct=7)
+    after = card.answer(Grade.GOOD, 300, SETTINGS)
+    assert after.t0 == 300
+    assert after.score_at(300, SETTINGS) == 100
+    assert (after.answers, after.correct) == (16, 8)
+
+
+def test_a_wrong_answer_keeps_the_clock_and_drops_the_score():
+    card = CardState(stability=50, t0=0, answers=15, correct=7)
+    after = card.answer(Grade.AGAIN, 300, SETTINGS)
+    assert after.t0 == 0
+    assert after.score_at(300, SETTINGS) < card.score_at(300, SETTINGS)
+    assert (after.answers, after.correct) == (16, 7)
