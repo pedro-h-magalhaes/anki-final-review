@@ -1,6 +1,6 @@
 These settings only change the order of the final review. They never touch Anki's own deck options or FSRS parameters, and every answer still counts for Anki's normal scheduling. A value of the wrong type or out of range is replaced by its default.
 
-**decks** — the decks that take part in the final review, by full name, such as `["Exam", "Biology::Cells"]`. A deck brings its subdecks with it. With `[]`, the final review has no cards.
+**decks** — the decks that take part in the final review, by full name, such as `["Exam", "Biology::Cells"]`. The gear on the Final Review row of the deck list sets this list for you. A deck brings its subdecks with it. With `[]`, the final review has no cards.
 
 **min_pace_seconds** — default `60`. How many seconds the score of a card with stability 0 takes to fall from 100 to 1. Raise it and the weakest cards wait longer before coming back; lower it and they come back sooner.
 

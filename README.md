@@ -2,7 +2,7 @@
 
 An Anki add-on for the final stretch before an exam. It will not schedule cards for other days: after every answer, it shows the card with the lowest retrievability score, a number from 100 down that falls faster on the cards mastered least.
 
-Turn it on in Tools → Final review, after choosing the decks in Tools → Add-ons → Final Review → Config. The settings are explained in `config.md`.
+Click Final Review at the top of the deck list to start; leaving the study screen ends it. The gear on that row chooses the decks. The other settings are explained in `config.md`.
 
 ## Development
 
