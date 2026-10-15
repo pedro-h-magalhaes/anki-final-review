@@ -15,6 +15,7 @@ from aqt.qt import QAction
 from aqt.reviewer import Reviewer, V3CardInfo
 from aqt.utils import tooltip
 
+from .counts import queue_counts
 from .decks import deck_search
 from .session import Session
 from .settings import Settings
@@ -50,6 +51,15 @@ def _histories(col, search: str) -> dict[int, list[tuple[int, int]]]:
     return histories
 
 
+def _queues(col, card_ids: list[int]) -> list[int]:
+    """Return the Anki queue number of each of `card_ids`."""
+    queues: list[int] = []
+    for start in range(0, len(card_ids), _CHUNK):
+        chunk = ",".join(str(cid) for cid in card_ids[start:start + _CHUNK])
+        queues.extend(col.db.list(f"select queue from cards where id in ({chunk})"))
+    return queues
+
+
 def _queue_kind(queue: int):
     """Map a card's Anki queue number to the kind the reviewer counts it under."""
     if queue == 0:
@@ -73,6 +83,7 @@ def _get_next_v3_card(self: Reviewer) -> None:
     if card_id is None:
         return
     backend_card = col._backend.get_card(card_id)
+    new_count, learning_count, review_count = queue_counts(_queues(col, list(histories)))
     queued = QueuedCards(
         cards=[QueuedCards.QueuedCard(
             card=backend_card,
@@ -80,7 +91,9 @@ def _get_next_v3_card(self: Reviewer) -> None:
             context=SchedulingContext(),
             queue=_queue_kind(backend_card.queue),
         )],
-        review_count=len(histories),
+        new_count=new_count,
+        learning_count=learning_count,
+        review_count=review_count,
     )
     self._v3 = V3CardInfo.from_queue(queued)
     self.card = Card(col, backend_card=backend_card)
