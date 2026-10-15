@@ -1,0 +1,10 @@
+{
+  "decks": [],
+  "min_pace_seconds": 60,
+  "max_pace_seconds": 14400,
+  "initial_stability": 20,
+  "answers_to_cross": {"again": 3, "hard": 9, "good": 9, "easy": 3},
+  "rate_band": 3,
+  "volume_brake": 0.05,
+  "answers_for_half_volume": 15
+}
