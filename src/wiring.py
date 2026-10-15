@@ -182,6 +182,7 @@ def _start() -> None:
         return
     _session = Session(settings)
     mw.col.decks.select(deck_ids[0])
+    mw.col.startTimebox()
     mw.moveToState("review")
 
 
